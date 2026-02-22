@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Droplet, Info, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Analytics } from "@vercel/analytics/react";
 
 function cn(...inputs) {
     return twMerge(clsx(inputs));
@@ -248,6 +249,7 @@ function App() {
                 </section>
 
             </main>
+            <Analytics />
         </div>
     );
 }
