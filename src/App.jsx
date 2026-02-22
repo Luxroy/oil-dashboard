@@ -217,7 +217,10 @@ function App() {
                                                     })()}
                                                 </div>
                                                 <div className={cn("text-[10px] mt-1 font-medium", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
-                                                    ({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})
+                                                    <span className="block">({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})</span>
+                                                    {row.spreadReason && (
+                                                        <span className="block mt-0.5 text-[9px] italic opacity-80">"{row.spreadReason}"</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -288,8 +291,11 @@ function App() {
                                                             return null;
                                                         })()}
                                                     </div>
-                                                    <div className={cn("text-xs mt-0.5", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
-                                                        ({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})
+                                                    <div className={cn("text-xs mt-0.5 flex items-center space-x-1", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
+                                                        <span>({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})</span>
+                                                        {row.spreadReason && (
+                                                            <span className="italic opacity-80">"{row.spreadReason}"</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4 whitespace-nowrap text-sm border-b border-oil-light-gray font-mono tracking-widest">

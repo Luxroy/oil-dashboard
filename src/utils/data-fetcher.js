@@ -8,31 +8,31 @@ export const MOckSpotPrices = {
 
 // Fallback/Base data for regions and static reserves (if EIA API doesn't easily expose reserves on the international endpoint)
 export const BaseCountryMap = {
-    "United States": { reserves: 44.4, region: "West", differential: 0.00 }, // WTI baseline
-    "Saudi Arabia": { reserves: 267.1, region: "Middle East", differential: 1.50 }, // Arab Light premium
-    "Russia": { reserves: 80.0, region: "Europe/Africa", differential: -12.00 }, // Urals discount
-    "Canada": { reserves: 168.1, region: "West", differential: -15.00 }, // WCS heavy discount
-    "Iraq": { reserves: 145.0, region: "Middle East", differential: -2.00 }, // Basrah Heavy discount
-    "China": { reserves: 26.0, region: "West", differential: -1.00 },
-    "United Arab Emirates": { reserves: 111.0, region: "Middle East", differential: 0.50 }, // Murban premium
-    "Iran": { reserves: 208.6, region: "Middle East", differential: -1.50 }, // Iran Heavy discount
-    "Brazil": { reserves: 13.2, region: "West", differential: 0.50 }, // Lula premium
-    "Kuwait": { reserves: 101.5, region: "Middle East", differential: -1.00 }, // Kuwait Export discount
-    "Norway": { reserves: 5.1, region: "Europe/Africa", differential: 1.00 }, // Oseberg premium
-    "Nigeria": { reserves: 36.9, region: "Europe/Africa", differential: 2.50 }, // Bonny Light premium
-    "Mexico": { reserves: 5.8, region: "West", differential: -8.00 }, // Maya heavy discount
-    "Kazakhstan": { reserves: 30.0, region: "Europe/Africa", differential: -1.50 }, // CPC blend
-    "Qatar": { reserves: 25.2, region: "Middle East", differential: 1.00 }, // Qatar Marine
-    "Algeria": { reserves: 12.2, region: "Europe/Africa", differential: 3.00 }, // Saharan Blend premium
-    "Oman": { reserves: 5.4, region: "Middle East", differential: 0.00 }, // Dubai/Oman baseline
-    "United Kingdom": { reserves: 2.5, region: "Europe/Africa", differential: 0.00 }, // Brent baseline
-    "Colombia": { reserves: 2.0, region: "West", differential: -7.00 }, // Castilla heavy discount
-    "Angola": { reserves: 7.8, region: "Europe/Africa", differential: -1.00 }, // Cabinda
-    "Libya": { reserves: 48.4, region: "Europe/Africa", differential: 2.00 }, // Es Sider premium
-    "Argentina": { reserves: 2.5, region: "West", differential: 0.00 }, // Escalante
-    "Indonesia": { reserves: 2.4, region: "Middle East", differential: 1.00 }, // Minas premium
-    "Azerbaijan": { reserves: 7.0, region: "Europe/Africa", differential: 1.50 }, // Azeri Light premium
-    "Egypt": { reserves: 3.3, region: "Middle East", differential: -2.00 }, // Belayim discount
+    "United States": { reserves: 44.4, region: "West", differential: 0.00, spreadReason: "WTI Baseline" },
+    "Saudi Arabia": { reserves: 267.1, region: "Middle East", differential: 1.50, spreadReason: "Arab Light Premium" },
+    "Russia": { reserves: 80.0, region: "Europe/Africa", differential: -12.00, spreadReason: "Sanction Discount" },
+    "Canada": { reserves: 168.1, region: "West", differential: -15.00, spreadReason: "WCS Heavy Sour" },
+    "Iraq": { reserves: 145.0, region: "Middle East", differential: -2.00, spreadReason: "Basrah Heavy" },
+    "China": { reserves: 26.0, region: "West", differential: -1.00, spreadReason: "Import Logistics" },
+    "United Arab Emirates": { reserves: 111.0, region: "Middle East", differential: 0.50, spreadReason: "Murban Premium" },
+    "Iran": { reserves: 208.6, region: "Middle East", differential: -1.50, spreadReason: "Sanction/Heavy" },
+    "Brazil": { reserves: 13.2, region: "West", differential: 0.50, spreadReason: "Lula Sweet" },
+    "Kuwait": { reserves: 101.5, region: "Middle East", differential: -1.00, spreadReason: "Export Blend" },
+    "Norway": { reserves: 5.1, region: "Europe/Africa", differential: 1.00, spreadReason: "Oseberg Light" },
+    "Nigeria": { reserves: 36.9, region: "Europe/Africa", differential: 2.50, spreadReason: "Bonny Light Sweet" },
+    "Mexico": { reserves: 5.8, region: "West", differential: -8.00, spreadReason: "Maya Heavy Sour" },
+    "Kazakhstan": { reserves: 30.0, region: "Europe/Africa", differential: -1.50, spreadReason: "CPC Blend Route" },
+    "Qatar": { reserves: 25.2, region: "Middle East", differential: 1.00, spreadReason: "Qatar Marine" },
+    "Algeria": { reserves: 12.2, region: "Europe/Africa", differential: 3.00, spreadReason: "Saharan Blend" },
+    "Oman": { reserves: 5.4, region: "Middle East", differential: 0.00, spreadReason: "Dubai/Oman Baseline" },
+    "United Kingdom": { reserves: 2.5, region: "Europe/Africa", differential: 0.00, spreadReason: "Brent Baseline" },
+    "Colombia": { reserves: 2.0, region: "West", differential: -7.00, spreadReason: "Castilla Heavy" },
+    "Angola": { reserves: 7.8, region: "Europe/Africa", differential: -1.00, spreadReason: "Cabinda Blend" },
+    "Libya": { reserves: 48.4, region: "Europe/Africa", differential: 2.00, spreadReason: "Es Sider Light" },
+    "Argentina": { reserves: 2.5, region: "West", differential: 0.00, spreadReason: "Escalante Sweet" },
+    "Indonesia": { reserves: 2.4, region: "Middle East", differential: 1.00, spreadReason: "Minas Premium" },
+    "Azerbaijan": { reserves: 7.0, region: "Europe/Africa", differential: 1.50, spreadReason: "Azeri Light" },
+    "Egypt": { reserves: 3.3, region: "Middle East", differential: -2.00, spreadReason: "Belayim Heavy" },
 };
 
 export const getPriceData = (region, differential, spotPrices = MOckSpotPrices) => {
@@ -187,7 +187,8 @@ export const fetchProcessedOilData = async () => {
                         production: countryLatestProd[country] || 0, // from EIA API
                         reserves: baseInfo.reserves, // from base data since reserves API requires separate complex query
                         region: baseInfo.region,
-                        differential: baseInfo.differential
+                        differential: baseInfo.differential,
+                        spreadReason: baseInfo.spreadReason
                     };
                 });
 
@@ -248,6 +249,7 @@ export const fetchProcessedOilData = async () => {
             benchmark: priceInfo.benchmark,
             basePrice: priceInfo.basePrice,
             differential: priceInfo.differential,
+            spreadReason: countryData.spreadReason || BaseCountryMap[countryData.country]?.spreadReason || "Unknown",
             sellingPrice: priceInfo.sellingPrice,
             correlationScore: parseFloat(score),
         };
