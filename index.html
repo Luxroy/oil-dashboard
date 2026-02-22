@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Oil Dashboard | Live Real-Time Benchmark Prices & Production Data</title>
+  <meta name="description"
+    content="Interactive Global Oil Dashboard visualizing real-time top 25 crude producers, benchmark prices (WTI, Brent, Dubai/Oman), reserves, and price differentials." />
+  <meta name="keywords"
+    content="Crude Oil, WTI, Brent, Dubai/Oman, Oil Production, Oil Reserves, Oil Prices, EIA Data, Energy Dashboard, Differential Pricing" />
+  <meta name="author" content="Global Oil Analytics" />
+
+  <!-- Open Graph for Social Media/Bots -->
+  <meta property="og:title" content="Global Oil Dashboard | Live Benchmarks" />
+  <meta property="og:description"
+    content="Explore real-time crude oil production, global reserves, and benchmark pricing differentials powered by live EIA data." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://your-deployment-url.vercel.app/" />
+
+  <!-- JSON-LD Structured Data for AI Answer Engines -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Global Oil Dashboard",
+      "description": "An interactive web application providing real-time analytics on global crude oil production, proven reserves, and regional physical market pricing differentials.",
+      "applicationCategory": "BusinessApplication",
+      "about": {
+        "@type": "Dataset",
+        "name": "Live Global Petroleum Production and Benchmark Prices",
+        "description": "Real-time dataset tracking the Top 25 global oil producers. Metrics include daily production volumes, billions of barrels in proven reserves, and dynamic physical benchmark pricing (WTI, Brent, Dubai/Oman) with quality differentials.",
+        "creator": {
+          "@type": "Organization",
+          "name": "US Energy Information Administration (EIA)"
+        }
+      }
+    }
+    </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>
