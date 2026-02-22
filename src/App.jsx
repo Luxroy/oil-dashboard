@@ -134,7 +134,68 @@ function App() {
                         </div>
                     </div>
 
-                    <div className="bg-oil-gray rounded-2xl border border-oil-light-gray overflow-hidden shadow-2xl">
+                    <div className="md:hidden space-y-4 mb-6">
+                        {data.map((row) => {
+                            const isHighProd = row.production >= 4000000;
+                            const isLowPrice = row.sellingPrice < 80;
+                            const isHighlighted = isHighProd && isLowPrice;
+
+                            return (
+                                <div key={row.country} className={cn(
+                                    "p-5 rounded-2xl border transition-colors duration-200 shadow-md",
+                                    isHighlighted ? "bg-oil-green/10 border-oil-green/30" : "bg-oil-gray border-oil-light-gray"
+                                )}>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className={cn("text-lg font-bold", isHighlighted ? "text-oil-green" : "text-oil-white")}>
+                                            {row.country}
+                                        </h3>
+                                        <span className={cn(
+                                            "px-2 py-1 rounded text-xs font-mono font-bold tracking-widest border",
+                                            row.correlationScore >= 8 ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                                row.correlationScore <= 2 ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                                    "bg-oil-gold/10 text-oil-gold border-oil-gold/20"
+                                        )}>
+                                            {row.correlationScore}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-4 text-sm">
+                                        <div>
+                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Production</p>
+                                            <p className={cn("font-mono font-medium", isHighlighted ? "text-oil-green" : "text-gray-300")}>
+                                                {row.production.toLocaleString()} <span className="text-gray-500 text-[10px] ml-0.5">bbl/d</span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Reserves</p>
+                                            <p className={cn("font-mono font-medium", isHighlighted ? "text-oil-green" : "text-gray-300")}>
+                                                {row.reserves.toFixed(1)} <span className="text-gray-500 text-[10px] ml-0.5">B bbl</span>
+                                            </p>
+                                        </div>
+                                        <div className="col-span-2 pt-3 border-t border-oil-light-gray/50 mt-1 flex justify-between items-end">
+                                            <div>
+                                                <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-2">Benchmark</p>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-oil-black text-oil-gold border border-oil-gold border-opacity-20 shadow-sm">
+                                                    {row.benchmark}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Price & Spread</p>
+                                                <div className={cn("text-xl font-mono font-bold", isHighlighted ? "text-oil-green" : "text-oil-white")}>
+                                                    ${row.sellingPrice.toFixed(2)}
+                                                </div>
+                                                <div className={cn("text-[10px] mt-1 font-medium", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
+                                                    ({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="hidden md:block bg-oil-gray rounded-2xl border border-oil-light-gray overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-oil-light-gray bg-opacity-50">
