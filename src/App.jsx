@@ -9,10 +9,27 @@ function cn(...inputs) {
     return twMerge(clsx(inputs));
 }
 
+function getTrend(historyData, benchmarkAbbr) {
+    if (!historyData || historyData.length < 2) return null;
+    let historyKey = "";
+    if (benchmarkAbbr === "WTI") historyKey = "WTI Crude";
+    else if (benchmarkAbbr === "Brent") historyKey = "Brent Crude";
+    else if (benchmarkAbbr === "Dubai/Oman") historyKey = "Dubai/Oman (Est.)";
+    else return null;
+
+    const currentMonth = historyData[historyData.length - 1][historyKey];
+    const prevMonth = historyData[historyData.length - 2][historyKey];
+
+    if (currentMonth > prevMonth) return 'up';
+    if (currentMonth < prevMonth) return 'down';
+    return 'flat';
+}
+
 function App() {
     const [data, setData] = useState([]);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState(null);
 
     useEffect(() => {
         async function loadData() {
@@ -27,6 +44,7 @@ function App() {
                 console.error("Failed to load data", e);
             } finally {
                 setLoading(false);
+                setLastUpdated(new Date());
             }
         }
         loadData();
@@ -53,6 +71,14 @@ function App() {
                             Oil
                         </h1>
                     </div>
+                    {lastUpdated && (
+                        <div className="text-right">
+                            <span className="block text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-0.5">Last Updated</span>
+                            <span className="text-xs text-oil-gold font-mono bg-oil-gold/10 px-2 py-1 rounded border border-oil-gold/20">
+                                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </header>
 
@@ -161,13 +187,13 @@ function App() {
 
                                     <div className="grid grid-cols-2 gap-y-4 gap-x-4 text-sm">
                                         <div>
-                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Production</p>
+                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1 flex items-center gap-1">Production <Info className="w-3 h-3 text-gray-500" title="Measured in Barrels per Day (bbl/d)" /></p>
                                             <p className={cn("font-mono font-medium", isHighlighted ? "text-oil-green" : "text-gray-300")}>
                                                 {row.production.toLocaleString()} <span className="text-gray-500 text-[10px] ml-0.5">bbl/d</span>
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Reserves</p>
+                                            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1 flex items-center gap-1">Reserves <Info className="w-3 h-3 text-gray-500" title="Proven Reserves in Billions of Barrels (B bbl)" /></p>
                                             <p className={cn("font-mono font-medium", isHighlighted ? "text-oil-green" : "text-gray-300")}>
                                                 {row.reserves.toFixed(1)} <span className="text-gray-500 text-[10px] ml-0.5">B bbl</span>
                                             </p>
@@ -180,9 +206,15 @@ function App() {
                                                 </span>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Price & Spread</p>
-                                                <div className={cn("text-xl font-mono font-bold", isHighlighted ? "text-oil-green" : "text-oil-white")}>
+                                                <p className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-1 flex justify-end items-center gap-1">Price & Spread</p>
+                                                <div className={cn("text-xl font-mono font-bold flex items-center justify-end", isHighlighted ? "text-oil-green" : "text-oil-white")}>
                                                     ${row.sellingPrice.toFixed(2)}
+                                                    {(() => {
+                                                        const trend = getTrend(history, row.benchmark);
+                                                        if (trend === 'up') return <TrendingUp className="w-4 h-4 text-oil-green ml-1 mb-0.5" title="Trending Up vs Last Month" />;
+                                                        if (trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500 ml-1 mb-0.5" title="Trending Down vs Last Month" />;
+                                                        return null;
+                                                    })()}
                                                 </div>
                                                 <div className={cn("text-[10px] mt-1 font-medium", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
                                                     ({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})
@@ -201,8 +233,18 @@ function App() {
                                 <thead className="bg-oil-light-gray bg-opacity-50">
                                     <tr>
                                         <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Country</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Production (bbl/day)</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Reserves (Billion bbl)</th>
+                                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">
+                                            <div className="flex items-center space-x-1" title="Measured in Barrels per Day (bbl/d)">
+                                                <span>Production (bbl/day)</span>
+                                                <Info className="w-3 h-3 text-gray-500" />
+                                            </div>
+                                        </th>
+                                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">
+                                            <div className="flex items-center space-x-1" title="Proven Reserves in Billions of Barrels (B bbl)">
+                                                <span>Reserves (Billion bbl)</span>
+                                                <Info className="w-3 h-3 text-gray-500" />
+                                            </div>
+                                        </th>
                                         <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Benchmark</th>
                                         <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Selling Price & Spread</th>
                                         <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-oil-gold uppercase tracking-wider border-b border-oil-light-gray">Correlation Score (0-10)</th>
@@ -237,7 +279,15 @@ function App() {
                                                     </span>
                                                 </td>
                                                 <td className={cn("px-4 py-4 whitespace-nowrap text-sm border-b border-oil-light-gray font-mono font-medium", isHighlighted ? "text-oil-green" : "text-oil-white")}>
-                                                    <div className="text-base">${row.sellingPrice.toFixed(2)}</div>
+                                                    <div className="flex items-center text-base">
+                                                        ${row.sellingPrice.toFixed(2)}
+                                                        {(() => {
+                                                            const trend = getTrend(history, row.benchmark);
+                                                            if (trend === 'up') return <TrendingUp className="w-4 h-4 text-oil-green ml-1 mb-0.5" title="Trending Up vs Last Month" />;
+                                                            if (trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500 ml-1 mb-0.5" title="Trending Down vs Last Month" />;
+                                                            return null;
+                                                        })()}
+                                                    </div>
                                                     <div className={cn("text-xs mt-0.5", isHighlighted ? "text-oil-green/70" : "text-gray-500")}>
                                                         ({row.benchmark} {row.differential > 0 ? '+' : ''}{row.differential === 0 ? 'Base' : `$${row.differential.toFixed(2)}`})
                                                     </div>

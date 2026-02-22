@@ -63,8 +63,49 @@ export const getPriceData = (region, differential, spotPrices = MOckSpotPrices) 
     };
 };
 
+// Cache configuration: 15 minutes TTL
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+export const getCachedData = (key) => {
+    try {
+        const cached = localStorage.getItem(key);
+        if (!cached) return null;
+
+        const parsed = JSON.parse(cached);
+        // Check if cache expired
+        if (Date.now() - parsed.timestamp > CACHE_TTL_MS) {
+            localStorage.removeItem(key);
+            return null;
+        }
+        return parsed.data;
+    } catch (e) {
+        console.warn("Failed to read cache", e);
+        return null;
+    }
+};
+
+export const setCachedData = (key, data) => {
+    try {
+        const payload = {
+            timestamp: Date.now(),
+            data: data
+        };
+        localStorage.setItem(key, JSON.stringify(payload));
+    } catch (e) {
+        console.warn("Failed to write to cache", e);
+    }
+};
+
 export const fetchLivePrices = async (apiKey) => {
     if (!apiKey) return MOckSpotPrices;
+
+    const CACHE_KEY = "oil_live_prices";
+    const cachedPrices = getCachedData(CACHE_KEY);
+    if (cachedPrices) {
+        console.log("Using cached live prices");
+        return cachedPrices;
+    }
+
     try {
         const url = `https://api.eia.gov/v2/petroleum/pri/spt/data?api_key=${apiKey}&frequency=daily&data[0]=value&facets[series][]=RBRTE&facets[series][]=RWTC&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=10`;
         const res = await fetch(url);
@@ -80,11 +121,13 @@ export const fetchLivePrices = async (apiKey) => {
         });
 
         if (brentPrice !== null && wtiPrice !== null) {
-            return {
+            const finalPrices = {
                 WTI: wtiPrice,
                 Brent: brentPrice,
                 DubaiOman: parseFloat((brentPrice + 0.42).toFixed(2)) // Proxied closely to Brent
             };
+            setCachedData(CACHE_KEY, finalPrices);
+            return finalPrices;
         }
     } catch (e) {
         console.error("Error fetching live EIA prices:", e);
@@ -104,45 +147,57 @@ export const fetchProcessedOilData = async () => {
     let currentSpotPrices = { ...MOckSpotPrices };
 
     if (apiKey && apiKey.trim() !== "") {
+        const CACHE_KEY = "oil_processed_data";
+        const cachedProcessed = getCachedData(CACHE_KEY);
+
         currentSpotPrices = await fetchLivePrices(apiKey);
-        try {
-            // Query EIA API v2 for International Petroleum Production
-            // activityId: 1 (Production), productId: 53 (Crude oil including lease condensate)
-            const url = `https://api.eia.gov/v2/international/data?api_key=${apiKey}&frequency=annual&data[0]=value&facets[activityId][]=1&facets[productId][]=53&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=500`;
 
-            const res = await fetch(url);
-            const eiaData = await res.json();
+        if (cachedProcessed) {
+            console.log("Using cached processed global data");
+            finalData = cachedProcessed;
+        } else {
+            try {
+                // Query EIA API v2 for International Petroleum Production
+                // activityId: 1 (Production), productId: 53 (Crude oil including lease condensate)
+                const url = `https://api.eia.gov/v2/international/data?api_key=${apiKey}&frequency=annual&data[0]=value&facets[activityId][]=1&facets[productId][]=53&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=500`;
 
-            // The data array contains entries for different countries over time.
-            // We want the most recent year's data for our recognized base countries.
-            const rawData = eiaData.response?.data || [];
+                const res = await fetch(url);
+                const eiaData = await res.json();
 
-            const countryLatestProd = {};
-            rawData.forEach(item => {
-                const cName = item.countryRegionName;
-                // EIA gives data in thousand barrels per day. We need actual bbl/day.
-                if (BaseCountryMap[cName]) {
-                    // If we haven't seen this country yet (since it's sorted desc by period), this is the latest.
-                    if (!countryLatestProd[cName]) {
-                        countryLatestProd[cName] = item.value * 1000;
+                // The data array contains entries for different countries over time.
+                // We want the most recent year's data for our recognized base countries.
+                const rawData = eiaData.response?.data || [];
+
+                const countryLatestProd = {};
+                rawData.forEach(item => {
+                    const cName = item.countryRegionName;
+                    // EIA gives data in thousand barrels per day. We need actual bbl/day.
+                    if (BaseCountryMap[cName]) {
+                        // If we haven't seen this country yet (since it's sorted desc by period), this is the latest.
+                        if (!countryLatestProd[cName]) {
+                            countryLatestProd[cName] = item.value * 1000;
+                        }
                     }
-                }
-            });
+                });
 
-            // Build out the final mapped dataset using the fetched EIA production.
-            finalData = Object.entries(BaseCountryMap).map(([country, baseInfo]) => {
-                return {
-                    country,
-                    production: countryLatestProd[country] || 0, // from EIA API
-                    reserves: baseInfo.reserves, // from base data since reserves API requires separate complex query
-                    region: baseInfo.region,
-                    differential: baseInfo.differential
-                };
-            });
+                // Build out the final mapped dataset using the fetched EIA production.
+                finalData = Object.entries(BaseCountryMap).map(([country, baseInfo]) => {
+                    return {
+                        country,
+                        production: countryLatestProd[country] || 0, // from EIA API
+                        reserves: baseInfo.reserves, // from base data since reserves API requires separate complex query
+                        region: baseInfo.region,
+                        differential: baseInfo.differential
+                    };
+                });
 
-        } catch (e) {
-            console.error("Error fetching EIA API:", e);
-            // Fallback
+                // Cache the final production mapping
+                setCachedData(CACHE_KEY, finalData);
+
+            } catch (e) {
+                console.error("Error fetching EIA API:", e);
+                // Fallback
+            }
         }
     }
 
@@ -202,6 +257,13 @@ export const fetchProcessedOilData = async () => {
 export const fetchHistoricalData = async () => {
     const apiKey = import.meta.env.VITE_EIA_KEY;
     if (!apiKey) return []; // Require API key
+
+    const CACHE_KEY = "oil_historical_data";
+    const cachedHistory = getCachedData(CACHE_KEY);
+    if (cachedHistory) {
+        console.log("Using cached historical data");
+        return cachedHistory;
+    }
 
     try {
         // Fetch daily data for the past ~365 days (length=250 trading days roughly covers a year)
